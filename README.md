@@ -23,3 +23,10 @@ File or Folder | Purpose
 ## Learn More
 
 Learn more at https://cap.cloud.sap/docs/get-started/.
+### Demo 
+| Function | Image |
+| :--- | :--- |
+| **Create PR** | ![Create PR](./img/CreatePR.png) |
+| **PR List** | ![List PR](./img/ListPR.png) |
+| **PR Detail** | ![PR Detail](./img/PrDetail.png) |
+| **PR Rejection** | ![Reject PR](./img/RejectPR.png) |
