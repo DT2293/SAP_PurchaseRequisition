@@ -1,0 +1,88 @@
+<core:FragmentDefinition
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+  xmlns:form="sap.ui.layout.form">
+
+  <Dialog id="dlgCreatePR" title="Create Purchase Requisition">
+    <content>
+      <VBox>
+        <!-- Header form -->
+        <form:SimpleForm editable="true" layout="ResponsiveGridLayout">
+          <Label text="Requester"/>
+          <Input id="inpRequester" placeholder="Enter requester"/>
+
+          <Label text="Department"/>
+          <Select id="selDept" items="{ path: '/Departments' }">
+            <items>
+              <core:Item key="{deptId}" text="{deptName}"/>
+            </items>
+          </Select>
+
+          <Label text="Vendor"/>
+          <Select id="selVendor" items="{ path: '/Vendors' }">
+            <items>
+              <core:Item key="{vendorId}" text="{vendorName}"/>
+            </items>
+          </Select>
+
+          <Label text="PR Date"/>
+          <DatePicker id="dpPrDate"/>
+        </form:SimpleForm>
+
+        <!-- Items table -->
+        <Table id="tblNewItems" inset="false">
+          <columns>
+            <Column><Text text="Product"/></Column>
+            <Column><Text text="Description"/></Column>
+            <Column><Text text="Qty"/></Column>
+            <Column><Text text="Unit Price"/></Column>
+            <Column hAlign="Center" width="5rem"><Text text=""/></Column>
+          </columns>
+
+          <items>
+            <ColumnListItem>
+              <cells>
+                <!-- Product dropdown -->
+                <Select items="{
+                    path: '/Products',
+                    parameters: { $select: 'productId,productName,description,basePrice' }
+                  }"
+                  change=".onProductChange">
+                  <items>
+                    <core:Item key="{productId}" text="{productName}"/>
+                  </items>
+                </Select>
+
+                <!-- Description auto-fill -->
+                <Input editable="false" placeholder="Description"/>
+
+                <!-- Quantity -->
+                <Input type="Number" placeholder="Qty"/>
+
+                <!-- Unit Price auto-fill -->
+                <Input type="Number" placeholder="Unit Price"/>
+
+                <!-- Delete row button -->
+                <Button icon="sap-icon://delete"
+                        type="Transparent"
+                        tooltip="Delete row"
+                        press=".onDeleteItemRow"/>
+              </cells>
+            </ColumnListItem>
+          </items>
+        </Table>
+
+        <!-- Add item button -->
+        <Button text="Add Item" press=".onAddItem"/>
+      </VBox>
+    </content>
+
+    <!-- Footer buttons -->
+    <beginButton>
+      <Button text="Create" press=".onConfirmCreatePR"/>
+    </beginButton>
+    <endButton>
+      <Button text="Cancel" press=".onCancelCreatePR"/>
+    </endButton>
+  </Dialog>
+</core:FragmentDefinition>

@@ -1,0 +1,278 @@
+
+# POST http://localhost:4004/odata/v4/pr/PurchaseRequisitions
+# Content-Type: application/json
+
+# {
+#   "prId": "PR0001",
+#   "requesterName": "Dung",
+#   "deptId": "IT",
+#   "vendorId": "V001",
+#   "prDate": "2026-01-22"
+# }
+
+
+# POST http://localhost:4004/odata/v4/pr/PurchaseRequisitionItems
+# Content-Type: application/json
+
+# {
+#   "prItemId": "PR0001-001",
+#   "prId": "PR0001",
+#   "productId": "P001",
+#   "description": "Laptop Dell 14 inch",
+#   "quantity": 4,
+#   "unitPrice": 25000000
+# }
+
+
+
+
+# POST http://localhost:4004/odata/v4/pr/approvePR
+# Content-Type: application/json
+
+# { "prId": "PR0001" }
+
+//GET http://localhost:4004/odata/v4/pr/PurchaseRequisitionItems('PR0001-001')
+
+//GET http://localhost:4004/odata/v4/pr/PurchaseRequisitionItems?$select=prItemId,prId,quantity,unitPrice,lineAmount
+
+# PATCH http://localhost:4004/odata/v4/pr/PurchaseRequisitionItems(prItemId='PR0001-001')
+# Content-Type: application/json
+
+#  { "quantity": 13 }
+
+
+
+
+@baseUrl = http://localhost:4004
+@service = {{baseUrl}}/odata/v4/pr
+
+
+###############################################################################
+# 2) Case: Create PR (status must default to SUBMITTED)
+###############################################################################
+
+@prId = PR_TEST_001
+@itemId = PR_TEST_001-001
+
+### 2.1 - Create PR header -> expect status=SUBMITTED, totalAmount=0
+POST {{service}}/PurchaseRequisitions
+Content-Type: application/json
+
+{
+  "prId": "{{prId}}",
+  "requesterName": "Dung",
+  "deptId": "IT",
+  "vendorId": "V001",
+  "prDate": "2026-01-23"
+}
+
+### 2.2 - Read PR by key (avoid filter confusion)
+GET {{service}}/PurchaseRequisitions('{{prId}}')?$select=prId,status,totalAmount,currencyCode,rejectReason
+
+
+###############################################################################
+# 3) Case: Create Item -> lineAmount computed; totalAmount recalculated
+###############################################################################
+
+### 3.1 - Create item -> expect lineAmount = quantity*unitPrice
+POST {{service}}/PurchaseRequisitionItems
+Content-Type: application/json
+
+{
+  "prItemId": "{{itemId}}",
+  "prId": "{{prId}}",
+  "productId": "P001",
+  "description": "Laptop Dell 14 inch",
+  "quantity": 4,
+  "unitPrice": 25000000
+}
+
+### 3.2 - Read item by key -> verify lineAmount
+GET {{service}}/PurchaseRequisitionItems('{{itemId}}')?$select=prItemId,prId,quantity,unitPrice,lineAmount
+
+### 3.3 - Read PR header again -> expect totalAmount updated (100,000,000)
+GET {{service}}/PurchaseRequisitions('{{prId}}')?$select=prId,status,totalAmount
+
+
+###############################################################################
+# 4) Case: PATCH item while PR is SUBMITTED -> should work
+#          - No "unitPrice must be a number" even if PATCH only quantity
+#          - lineAmount & totalAmount must update
+###############################################################################
+
+### 4.1 - Patch quantity only -> expect success, lineAmount recalculated
+PATCH {{service}}/PurchaseRequisitionItems(prItemId='{{itemId}}')
+Content-Type: application/json
+
+{
+  "quantity": 13
+}
+
+### 4.2 - Verify item -> lineAmount should be 13*25,000,000 = 325,000,000
+GET {{service}}/PurchaseRequisitionItems('{{itemId}}')?$select=prItemId,quantity,unitPrice,lineAmount
+
+### 4.3 - Verify PR totalAmount updated accordingly
+GET {{service}}/PurchaseRequisitions('{{prId}}')?$select=prId,status,totalAmount
+
+
+###############################################################################
+# 5) Case: Approve PR (only when SUBMITTED and has >=1 item)
+#          After approve -> PR becomes read-only
+###############################################################################
+
+### 5.1 - Approve PR -> expect success (may return JSON message if you added returns)
+POST {{service}}/approvePR
+Content-Type: application/json
+
+{
+  "prId": "{{prId}}"
+}
+
+### 5.2 - Verify PR status now APPROVED
+GET {{service}}/PurchaseRequisitions('{{prId}}')?$select=prId,status,totalAmount,rejectReason
+
+
+###############################################################################
+# 6) Case: Read-only enforcement after APPROVED
+#          - PATCH item should be blocked
+#          - PATCH header should be blocked
+###############################################################################
+
+### 6.1 - Try PATCH item after APPROVED -> expect 400 "read-only"
+PATCH {{service}}/PurchaseRequisitionItems(prItemId='{{itemId}}')
+Content-Type: application/json
+
+{
+  "quantity": 2
+}
+
+### 6.2 - Try PATCH PR header after APPROVED -> expect 400 "read-only"
+PATCH {{service}}/PurchaseRequisitions('{{prId}}')
+Content-Type: application/json
+
+{
+  "requesterName": "Dung Updated"
+}
+
+
+###############################################################################
+# 7) Case: Reject PR must require rejectReason; status must be SUBMITTED
+#          We'll create a new PR to test reject flow
+###############################################################################
+
+@prId2 = PR_TEST_002
+@itemId2 = PR_TEST_002-001
+
+### 7.1 - Create PR2 (SUBMITTED)
+POST {{service}}/PurchaseRequisitions
+Content-Type: application/json
+
+{
+  "prId": "{{prId2}}",
+  "requesterName": "Dung",
+  "deptId": "IT",
+  "vendorId": "V001",
+  "prDate": "2026-01-23"
+}
+
+### 7.2 - Create PR2 item (so it is valid)
+POST {{service}}/PurchaseRequisitionItems
+Content-Type: application/json
+
+{
+  "prItemId": "{{itemId2}}",
+  "prId": "{{prId2}}",
+  "productId": "P001",
+  "description": "Laptop Dell 14 inch",
+  "quantity": 1,
+  "unitPrice": 25000000
+}
+
+### 7.3 - Reject without reason -> expect 400 rejectReason is required
+POST {{service}}/rejectPR
+Content-Type: application/json
+
+{
+  "prId": "{{prId2}}",
+  "rejectReason": ""
+}
+
+### 7.4 - Reject with reason -> expect status REJECTED + reason persisted
+POST {{service}}/rejectPR
+Content-Type: application/json
+
+{
+  "prId": "{{prId2}}",
+  "rejectReason": "Budget not approved"
+}
+
+### 7.5 - Verify PR2 status REJECTED + rejectReason
+GET {{service}}/PurchaseRequisitions('{{prId2}}')?$select=prId,status,rejectReason,totalAmount
+
+### 7.6 - Try PATCH item after REJECTED -> expect 400 read-only
+PATCH {{service}}/PurchaseRequisitionItems(prItemId='{{itemId2}}')
+Content-Type: application/json
+
+{
+  "quantity": 5
+}
+
+
+###############################################################################
+# 8) Negative cases (optional but good for audit)
+###############################################################################
+
+### 8.1 - Approve PR that has NO items -> should be blocked
+
+@prEmpty = PR_TEST_EMPTY
+
+### 8.1.1 Create empty PR (no items)
+POST {{service}}/PurchaseRequisitions
+Content-Type: application/json
+
+{
+  "prId": "{{prEmpty}}",
+  "requesterName": "Dung",
+  "deptId": "IT",
+  "vendorId": "V001",
+  "prDate": "2026-01-23"
+}
+
+### 8.1.2 Verify empty PR exists (optional)
+GET {{service}}/PurchaseRequisitions('{{prEmpty}}')?$select=prId,status,totalAmount
+
+### 8.1.3 Approve empty PR -> expect 400 "must have at least 1 item"
+POST {{service}}/approvePR
+Content-Type: application/json
+
+{
+  "prId": "{{prEmpty}}"
+}
+
+
+### 8.2 - Create item with invalid quantity (<=0) -> expect 400
+POST {{service}}/PurchaseRequisitionItems
+Content-Type: application/json
+
+{
+  "prItemId": "INVALID-001",
+  "prId": "{{prId2}}",
+  "productId": "P001",
+  "description": "Invalid Qty",
+  "quantity": 0,
+  "unitPrice": 25000000
+}
+
+### 8.3 - Create item with invalid unitPrice (<0) -> expect 400
+POST {{service}}/PurchaseRequisitionItems
+Content-Type: application/json
+
+{
+  "prItemId": "INVALID-002",
+  "prId": "{{prId2}}",
+  "productId": "P001",
+  "description": "Invalid Price",
+  "quantity": 1,
+  "unitPrice": -1
+}
+

@@ -1,0 +1,145 @@
+
+<mvc:View
+  controllerName="prfe.controller.pr.PRList"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:f="sap.f"
+  xmlns:fb="sap.ui.comp.filterbar"
+  xmlns:core="sap.ui.core">
+  <f:DynamicPage
+    id="dpList"
+    headerExpanded="true"
+    preserveHeaderStateOnScroll="true"
+    toggleHeaderOnTitleClick="false">
+    <f:title>
+      <f:DynamicPageTitle>
+        <f:heading>
+          <Title text="Purchase Requisition" />
+        </f:heading>
+        <f:actions>
+         <Button text="Download Excel"
+        type="Emphasized"
+        icon="sap-icon://excel-attachment"
+        press=".onDownloadExcel"/>
+          <Button text="Create PR" press=".onOpenCreatePR"/>
+        </f:actions>
+      </f:DynamicPageTitle>
+    </f:title>
+
+    <f:header>
+      <f:DynamicPageHeader pinnable="true">
+        <fb:FilterBar
+          id="fb"
+          search=".onSearch"
+          showGoOnFB="true"
+          showClearOnFB="true">
+          <fb:filterGroupItems>
+            <!-- PR Date From -->
+            <fb:FilterGroupItem groupName="__basic" name="PRDateFrom" label="PR Date From">
+              <fb:control>
+                <DatePicker id="dpPRDateFrom" width="12rem" placeholder="From"/>
+              </fb:control>
+            </fb:FilterGroupItem>
+
+            <!-- PR Date To -->
+            <fb:FilterGroupItem groupName="__basic" name="PRDateTo" label="PR Date To">
+              <fb:control>
+                <DatePicker id="dpPRDateTo" width="12rem" placeholder="To"/>
+              </fb:control>
+            </fb:FilterGroupItem>
+
+            <!-- Status -->
+            <fb:FilterGroupItem groupName="__basic" name="Status" label="Status">
+              <fb:control>
+                <MultiComboBox id="mcStatus" width="16rem">
+                  <core:Item key="SUBMITTED" text="Submitted"/>
+                  <core:Item key="APPROVED" text="Approved"/>
+                  <core:Item key="REJECTED" text="Rejected"/>
+                </MultiComboBox>
+              </fb:control>
+            </fb:FilterGroupItem>
+
+          <!-- Department -->
+            <fb:FilterGroupItem groupName="__basic" name="Department" label="Department">
+              <fb:control>
+                <MultiComboBox id="mcDepartment" width="16rem"
+                              items="{
+                                path: '/Departments'
+                              }">
+                  <core:Item key="{deptId}" text="{deptName}"  />
+                </MultiComboBox>
+              </fb:control>
+            </fb:FilterGroupItem>
+
+            <!-- Vendor -->
+            <fb:FilterGroupItem groupName="__basic" name="Vendor" label="Vendor">
+              <fb:control>
+                <MultiComboBox id="mcVendor" width="16rem"
+                              items="{
+                                path: '/Vendors'
+                              }">
+                  <core:Item key="{vendorId}" text="{vendorName}" />
+                </MultiComboBox>
+              </fb:control>
+            </fb:FilterGroupItem>
+
+            <!-- Amount From -->
+            <fb:FilterGroupItem groupName="__basic" name="AmountFrom" label="Amount From">
+              <fb:control>
+                <Input id="inpAmountFrom" width="12rem" type="Number" placeholder="Min"/>
+              </fb:control>
+            </fb:FilterGroupItem>
+
+            <!-- Amount To -->
+            <fb:FilterGroupItem groupName="__basic" name="AmountTo" label="Amount To">
+              <fb:control>
+                <Input id="inpAmountTo" width="12rem" type="Number" placeholder="Max"/>
+              </fb:control>
+            </fb:FilterGroupItem>
+
+          </fb:filterGroupItems>
+        </fb:FilterBar>
+      </f:DynamicPageHeader>
+    </f:header>
+
+    <f:content>
+     <Table
+        id="tblPR"
+        growing="true"
+        items="{ path: '/PurchaseRequisitions' }">
+
+      <columns>
+        <Column><Text text="PR ID"/></Column>
+        <Column><Text text="PR Date"/></Column>
+        <Column><Text text="Requester"/></Column>
+        <Column><Text text="Department"/></Column>
+        <Column><Text text="Vendor"/></Column>
+        <Column><Text text="Status"/></Column>
+        <Column hAlign="End"><Text text="Total"/></Column>
+      </columns>
+
+      <items>
+        <ColumnListItem type="Navigation" press=".onPressPR">
+          <cells>
+            <Text text="{prId}"/>
+            <Text text="{prDate}"/>
+            <Text text="{requesterName}"/>
+            <Text text="{dept/deptName}"/>
+            <Text text="{vendor/vendorName}"/>
+          <ObjectStatus text="{status}" state="{path:'status', formatter:'.formatter.formatStatusState'}"/>
+
+            <Text
+              text="{
+                parts: [{path:'totalAmount'},{path:'currencyCode'}],
+                type: 'sap.ui.model.type.Currency'
+              }"
+              textAlign="End"/>
+          </cells>
+        </ColumnListItem>
+      </items>
+  </Table>
+
+    </f:content>
+
+  </f:DynamicPage>
+</mvc:View>

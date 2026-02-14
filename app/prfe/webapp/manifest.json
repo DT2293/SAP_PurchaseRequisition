@@ -1,0 +1,110 @@
+{
+  "_version": "1.81.0",
+  "sap.app": {
+    "id": "prfe",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.20.1"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/pr/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "dependencies": {
+      "minUI5Version": "1.144.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ui.layout": {}
+      }
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "prfe.i18n.i18n"
+        },
+        "supportedLocales": [
+          "en",
+          "vi"
+        ],
+        "fallbackLocale": "en"
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "viewType": "XML",
+        "viewPath": "prfe.view",
+        "controlId": "App",
+        "controlAggregation": "pages"
+      },
+      "routes": [
+        {
+          "pattern": "",
+          "name": "prList",
+          "target": "PRList"
+        },
+        {
+          "pattern": "PR/{prId}",
+          "name": "prDetail",
+          "target": "PRDetail"
+        }
+      ],
+      "targets": {
+        "PRList": {
+          "viewName": "PRList",
+          "viewLevel": 1
+        },
+        "PRDetail": {
+          "viewName": "PRDetail",
+          "viewLevel": 2
+        }
+      }
+    },
+    "rootView": {
+      "viewName": "prfe.view.App",
+      "type": "XML",
+      "async": true
+    }
+  }
+}

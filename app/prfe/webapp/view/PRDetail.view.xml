@@ -1,0 +1,108 @@
+<mvc:View
+  controllerName="prfe.controller.prd.PRDetail"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:f="sap.f">
+
+  <f:DynamicPage>
+    <!-- Page Title -->
+    <f:title>
+      <f:DynamicPageTitle>
+        <f:heading>
+          <Title text="Purchase Requisition {prId}" level="H1"/>
+        </f:heading>
+        <f:actions>
+          <Button text="Back"
+                  type="Transparent"
+                  icon="sap-icon://nav-back"
+                  press=".onNavBack"/>
+        </f:actions>
+      </f:DynamicPageTitle>
+    </f:title>
+
+    <f:content>
+      <VBox class="sapUiMediumMargin">
+
+        <!-- Header Info -->
+       <ObjectHeader
+  title="{requesterName}"
+  number="{
+    parts: [
+      { path: 'totalAmount' },
+      { path: 'currencyCode' }
+    ],
+    type: 'sap.ui.model.type.Currency'
+  }"
+  numberUnit="{currencyCode}">
+  <attributes>
+    <ObjectAttribute title="Department" text="{dept/deptName}"/>
+    <ObjectAttribute title="Vendor" text="{vendor/vendorName}"/>
+   <ObjectAttribute title="PR Date"
+  text="{
+    path: 'prDate',
+    type: 'sap.ui.model.odata.type.Date',
+    formatOptions: { style: 'medium' }
+  }"/>
+
+    <!-- Hiển thị lý do reject nếu status = REJECTED -->
+    <ObjectAttribute title="Reject Reason"
+                     text="{rejectReason}"
+                     visible="{= ${status} === 'REJECTED'}"/>
+  </attributes>
+  <statuses>
+    <ObjectStatus text="{status}" state="{path:'status', formatter:'.formatter.formatStatusState'}"/>
+  </statuses>
+</ObjectHeader>
+
+
+        <!-- Action Toolbar -->
+        <Toolbar class="sapUiSmallMarginTop">
+          <Title text="Items" level="H2"/>
+          <ToolbarSpacer/>
+          <Button text="Approve"
+                  visible="{view>/showApprove}"
+                  type="Accept"
+                  press=".onApprove"/>
+          <Button text="Reject"
+                  visible="{view>/showReject}"
+                  type="Reject"
+                  press=".onOpenReject"/>
+        </Toolbar>
+
+        <!-- Items Table -->
+        <Table id="tblItems"
+               inset="false"
+               items="{path: '/PurchaseRequisitionItems'}">
+          <columns>
+            <Column><Text text="Product"/></Column>
+            <Column><Text text="Description"/></Column>
+            <Column hAlign="End"><Text text="Qty"/></Column>
+            <Column hAlign="End"><Text text="Unit Price"/></Column>
+            <Column hAlign="End"><Text text="Line Amount"/></Column>
+          </columns>
+
+          <items>
+            <ColumnListItem>
+              <cells>
+                <Text text="{product/productName}"/>
+                <Text text="{description}"/>
+                <ObjectNumber number="{quantity}" unit="{product/uom}" textAlign="End"/>
+                <ObjectNumber number="{unitPrice}" unit="{currencyCode}" textAlign="End"/>
+                <ObjectNumber
+                  number="{
+                    parts: [
+                      { path: 'lineAmount' },
+                      { path: 'view>/currencyCode' }
+                    ],
+                    type: 'sap.ui.model.type.Currency'
+                  }"
+                  textAlign="End"/>
+              </cells>
+            </ColumnListItem>
+          </items>
+        </Table>
+
+      </VBox>
+    </f:content>
+  </f:DynamicPage>
+</mvc:View>

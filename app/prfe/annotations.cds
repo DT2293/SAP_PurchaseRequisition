@@ -1,0 +1,1 @@
+using PRService as service from '../../srv/pr-service';
